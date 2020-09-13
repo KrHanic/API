@@ -63,10 +63,49 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet("{ID}", Name = "GetPacijentByID")]
+        [HttpGet("GetPacijentiForKarta", Name = "GetPacijentiForKarta")]
+        public ActionResult<IEnumerable<PacijentiForKartaReadDTO>> GetPacijentiForKarta()
+        {
+            List<PacijentiForKartaReadDTO> pacijentiForKarta = new List<PacijentiForKartaReadDTO>();
+            var pacijenti = _repository.GetAllPacijenti();
+            foreach (var pacijent in pacijenti)
+            {
+                var stanje = _stanjeRepo.GetLastStanjeByID(pacijent.Id);
+                var udaljenost = 0d;
+                var trenutnaLokacija = _lokacijaRepo.GetLastLokacijeByID(pacijent.Id);
+                if (trenutnaLokacija?.Id != null && trenutnaLokacija?.Id != 0)
+                {
+                    var TL = new Coordinate(Convert.ToDouble(trenutnaLokacija.Lat), Convert.ToDouble(trenutnaLokacija.Long));
+                    var SI = new Coordinate(Convert.ToDouble(pacijent.Lat), Convert.ToDouble(pacijent.Long));
+                    udaljenost = GeoCalculator.GetDistance(TL, SI, 5) / 0.62137;
+                }
+
+                if (stanje?.Temperatura > 37)
+                {
+                    pacijent.Stanje = "Visoka temp.";
+                }
+                else if (udaljenost > 1)
+                {
+                    pacijent.Stanje = "Udaljen više od 1km";
+                }
+                else
+                {
+                    pacijent.Stanje = "Ok";
+                }
+                PacijentiForKartaReadDTO pacijentForKarta = new PacijentiForKartaReadDTO();
+                _mapper.Map<Pacijent, PacijentiForKartaReadDTO>(pacijent, pacijentForKarta);
+                _mapper.Map<LokacijaPacijenta, PacijentiForKartaReadDTO>(trenutnaLokacija, pacijentForKarta);
+                _mapper.Map<StanjePacijenta, PacijentiForKartaReadDTO>(stanje, pacijentForKarta);
+                pacijentiForKarta.Add(pacijentForKarta);
+            }
+            return Ok(pacijentiForKarta);
+        }
+
+        [Authorize]
+        [HttpGet("GetPacijentByID/{ID}", Name = "GetPacijentByID")]
         public ActionResult<PacijentReadDTO> GetPacijentByID(long ID)
         {
-            var pacijent = _repository.GetPacijentByOIB(ID);
+            var pacijent = _repository.GetPacijentByID(ID);
             if (pacijent != null)
             {
                 return Ok(_mapper.Map<PacijentReadDTO>(pacijent));
@@ -98,7 +137,7 @@ namespace API.Controllers
             return CreatedAtRoute(nameof(GetPacijentByOIB), new { Oib = pacijentReadDTO.Oib }, pacijentReadDTO);
         }
 
-        [AllowAnonymous]
+        [Authorize]
         [HttpPut("{OIB}")]
         public async Task<ActionResult> UpdatePacijent(long OIB, PacijentUpdateDTO pacijent)
         {

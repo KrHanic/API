@@ -40,7 +40,7 @@ namespace API.Data
             if (stanja.Count() > 0)
             {
                 var zadnjaVrijemeStanja = stanja.Max(s => s.Vrijeme);
-                return _mapper.Map<StanjePacijenta>(stanja.Where(s => s.Vrijeme == zadnjaVrijemeStanja).FirstOrDefault());
+                return _mapper.Map<StanjePacijenta>(stanja.Where(s => s.Vrijeme == zadnjaVrijemeStanja).LastOrDefault());
             }
             return new StanjePacijenta();
         }
