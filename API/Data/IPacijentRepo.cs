@@ -15,5 +15,6 @@ namespace API.Data
         Task UpdatePacijent(Pacijent pacijent);
         void DeletePacijent(Pacijent pacijent);
         Pacijent GetPacijentByID(long ID);
+        List<Pacijent> GetPacijentiByStatus(int status);
     }
 }

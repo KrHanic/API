@@ -65,5 +65,10 @@ namespace API.Data
             _context.Entry(entity).CurrentValues.SetValues(pacijent);
             await _context.SaveChangesAsync();
         }
+
+        public List<Pacijent> GetPacijentiByStatus(int status)
+        {
+            return _mapper.Map<List<Pacijent>>(_context._02Pacijent.Where(x => x.Status == status).ToList());
+        }
     }
 }

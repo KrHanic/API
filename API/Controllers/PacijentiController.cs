@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using Geolocation;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace API.Controllers
 {
@@ -29,7 +30,38 @@ namespace API.Controllers
             _stanjeRepo = stanjeRepo;
         }
 
-        [Authorize]
+        [AllowAnonymous]
+        [HttpGet("{status}", Name = "GetPacijentiByStatus")]
+        public ActionResult<List<PacijentReadDTO>> GetPacijentiByStatus(int status)
+        {
+            List<PacijentReadDTO> pacijentiDTO = new List<PacijentReadDTO>();
+            var pacijenti = _repository.GetPacijentiByStatus(status);
+            foreach (var pacijent in pacijenti)
+            {
+                var zadnjaLokacija = _lokacijaRepo.GetLastLokacijeByID(pacijent.Id);
+                var ZadnjeStanje = _stanjeRepo.GetLastStanjeByID(pacijent.Id);
+                List<StanjePacijenta> povijestStanja = _stanjeRepo.GetStanjaByID(pacijent.Id).ToList();
+
+                PacijentReadDTO pacijentReadDTO = new PacijentReadDTO() { 
+                    Id = pacijent.Id,
+                    Oib = pacijent.Oib,
+                    Ime = pacijent.Ime,
+                    Prezime = pacijent.Prezime,
+                    AdresaSi = pacijent.AdresaSi,
+                    Lat = pacijent.Lat,
+                    Long = pacijent.Long,
+                    ZadnjaLokacija = zadnjaLokacija,
+                    ZadnjeStanje = ZadnjeStanje,
+                    PovijestStanja = povijestStanja
+                };
+
+                pacijentiDTO.Add(pacijentReadDTO);
+            }
+
+            return Ok(pacijentiDTO);
+        }
+
+        [AllowAnonymous]
         [HttpGet]
         public ActionResult<IEnumerable<PacijentReadDTO>> GetAllPacijenti()
         {
@@ -62,7 +94,7 @@ namespace API.Controllers
             return Ok(_mapper.Map<IEnumerable<PacijentReadDTO>>(pacijenti));
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpGet("GetPacijentiForKarta", Name = "GetPacijentiForKarta")]
         public ActionResult<IEnumerable<PacijentiForKartaReadDTO>> GetPacijentiForKarta()
         {
@@ -101,7 +133,7 @@ namespace API.Controllers
             return Ok(pacijentiForKarta);
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpGet("GetPacijentByID/{ID}", Name = "GetPacijentByID")]
         public ActionResult<PacijentReadDTO> GetPacijentByID(long ID)
         {
@@ -113,7 +145,7 @@ namespace API.Controllers
             return NotFound();
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpGet("{OIB}", Name = "GetPacijentByOIB")]
         public ActionResult<PacijentReadDTO> GetPacijentByOIB(long OIB)
         {
@@ -125,7 +157,7 @@ namespace API.Controllers
             return NotFound();
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpPost]
         public ActionResult<PacijentReadDTO> CreatePacijent(PacijentCreateDTO pacijent)
         {
@@ -137,7 +169,7 @@ namespace API.Controllers
             return CreatedAtRoute(nameof(GetPacijentByOIB), new { Oib = pacijentReadDTO.Oib }, pacijentReadDTO);
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpPut("{OIB}")]
         public async Task<ActionResult> UpdatePacijent(long OIB, PacijentUpdateDTO pacijent)
         {
@@ -151,7 +183,7 @@ namespace API.Controllers
             return NoContent();
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpPatch("{OIB}")]
         public ActionResult PartialPacijentUpdate(int OIB, JsonPatchDocument<PacijentUpdateDTO> patchDoc)
         {
@@ -172,7 +204,7 @@ namespace API.Controllers
             return NoContent();
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpDelete("{OIB}")]
         public ActionResult DeletePacijent(long OIB)
         {

@@ -1,4 +1,7 @@
-﻿namespace API.DTOs
+﻿using API.Models;
+using System.Collections.Generic;
+
+namespace API.DTOs
 {
     public class PacijentReadDTO
     {
@@ -7,6 +10,10 @@
         public string Ime { get; set; }
         public string Prezime { get; set; }
         public string AdresaSi { get; set; }
-        public string Stanje { get; set; }
+        public decimal Lat { get; set; }
+        public decimal Long { get; set; }
+        public LokacijaPacijenta ZadnjaLokacija { get; set; }
+        public StanjePacijenta ZadnjeStanje { get; set; }
+        public List<StanjePacijenta> PovijestStanja { get; set; }
     }
 }
