@@ -40,7 +40,8 @@ namespace API
             services.AddScoped<IStanjeRepo, StanjeRepo>();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(opt => {
+                .AddJwtBearer(opt =>
+                {
                     opt.Audience = Configuration["AAD:ResourceId"];
                     opt.Authority = $"{Configuration["AAD:InstanceId"]}{Configuration["AAD:TenantId"]}";
                 });

@@ -31,7 +31,7 @@ namespace API.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("{status}", Name = "GetPacijentiByStatus")]
+        [HttpGet("GetPacijentiByStatus/{status}", Name = "GetPacijentiByStatus")]
         public ActionResult<List<PacijentReadDTO>> GetPacijentiByStatus(int status)
         {
             List<PacijentReadDTO> pacijentiDTO = new List<PacijentReadDTO>();
@@ -138,11 +138,26 @@ namespace API.Controllers
         public ActionResult<PacijentReadDTO> GetPacijentByID(long ID)
         {
             var pacijent = _repository.GetPacijentByID(ID);
-            if (pacijent != null)
+            var zadnjaLokacija = _lokacijaRepo.GetLastLokacijeByID(ID);
+            var ZadnjeStanje = _stanjeRepo.GetLastStanjeByID(ID);
+            List<StanjePacijenta> povijestStanja = _stanjeRepo.GetStanjaByID(ID).ToList();
+
+            PacijentReadDTO pacijentReadDTO = new PacijentReadDTO()
             {
-                return Ok(_mapper.Map<PacijentReadDTO>(pacijent));
-            }
-            return NotFound();
+                Id = pacijent.Id,
+                Oib = pacijent.Oib,
+                Ime = pacijent.Ime,
+                Prezime = pacijent.Prezime,
+                AdresaSi = pacijent.AdresaSi,
+                Lat = pacijent.Lat,
+                Long = pacijent.Long,
+                ZadnjaLokacija = zadnjaLokacija,
+                ZadnjeStanje = ZadnjeStanje,
+                PovijestStanja = povijestStanja
+            };
+
+
+            return Ok(pacijentReadDTO);
         }
 
         [AllowAnonymous]
@@ -159,14 +174,39 @@ namespace API.Controllers
 
         [AllowAnonymous]
         [HttpPost]
-        public ActionResult<PacijentReadDTO> CreatePacijent(PacijentCreateDTO pacijent)
+        public ActionResult<long> CreatePacijent(PacijentCreateDTO pacijent)
         {
             var pacijentModel = _mapper.Map<Pacijent>(pacijent);
-            _repository.CreatePacijent(pacijentModel);
-            _repository.SaveChanges();
+            pacijentModel.Id = _repository.CreatePacijent(pacijentModel);
 
-            var pacijentReadDTO = _mapper.Map<PacijentReadDTO>(pacijentModel);
-            return CreatedAtRoute(nameof(GetPacijentByOIB), new { Oib = pacijentReadDTO.Oib }, pacijentReadDTO);
+            return Created(nameof(CreatePacijent), pacijentModel.Id);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("GetPacijenteKojiSuPrekrsiliIzolaciju/", Name = "GetPacijenteKojiSuPrekrsiliIzolaciju")]
+        public ActionResult<IzvjesceDTO> GetPacijenteKojiSuPrekrsiliIzolaciju(PacijentFilterDTO filter)
+        {
+            return new IzvjesceDTO() { 
+                BrojPacijenataUIzolaciji = _repository.GetBrojPacijenataUIzolaciji(filter),
+                BrojPacijenataVanIzolacije = _repository.GetBrojPacijenataVanIzolacije(filter),
+                BrojPacijenataKojiSuPrekrsiliIzolaciju = _repository.GetBrojPacijenataKojiSuPrekrsiliIzolaciju(filter),
+                BrojPacijenataSaSimptomima = _repository.GetBrojPacijenataSaSimptomima(filter),
+                Pacijenti = _repository.GetPacijenteKojiSuPrekrsiliIzolaciju(filter),
+            };
+        }
+
+        [AllowAnonymous]
+        [HttpPost("GetPacijenteKojiImajuSimptome/", Name = "GetPacijenteKojiImajuSimptome")]
+        public ActionResult<IzvjesceDTO> GetPacijenteKojiImajuSimptome(PacijentFilterDTO filter)
+        {
+            return new IzvjesceDTO()
+            {
+                BrojPacijenataUIzolaciji = _repository.GetBrojPacijenataUIzolaciji(filter),
+                BrojPacijenataVanIzolacije = _repository.GetBrojPacijenataVanIzolacije(filter),
+                BrojPacijenataKojiSuPrekrsiliIzolaciju = _repository.GetBrojPacijenataKojiSuPrekrsiliIzolaciju(filter),
+                BrojPacijenataSaSimptomima = _repository.GetBrojPacijenataSaSimptomima(filter),
+                Pacijenti = _repository.GetPacijenteKojiImajuSimptome(filter),
+            };
         }
 
         [AllowAnonymous]
@@ -205,16 +245,16 @@ namespace API.Controllers
         }
 
         [AllowAnonymous]
-        [HttpDelete("{OIB}")]
-        public ActionResult DeletePacijent(long OIB)
+        [HttpDelete("{ID}")]
+        public ActionResult RemovePacijentFromIsolation(long ID)
         {
-            var pacijentModelFromRepo = _repository.GetPacijentByOIB(OIB);
+            var pacijentModelFromRepo = _repository.GetPacijentByID(ID);
             if (pacijentModelFromRepo == null)
             {
                 return NotFound();
             }
-            _repository.DeletePacijent(pacijentModelFromRepo);
-            _repository.SaveChanges();
+            pacijentModelFromRepo.Status = 3;
+            _repository.RemovePacijentFromIsolation(pacijentModelFromRepo);
             return NoContent();
         }
 

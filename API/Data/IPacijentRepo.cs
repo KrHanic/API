@@ -11,10 +11,16 @@ namespace API.Data
 
         IEnumerable<Pacijent> GetAllPacijenti();
         Pacijent GetPacijentByOIB(long OIB);
-        void CreatePacijent(Pacijent pacijent);
+        long CreatePacijent(Pacijent pacijent);
         Task UpdatePacijent(Pacijent pacijent);
-        void DeletePacijent(Pacijent pacijent);
+        Task RemovePacijentFromIsolation(Pacijent pacijent);
         Pacijent GetPacijentByID(long ID);
         List<Pacijent> GetPacijentiByStatus(int status);
+        int? GetBrojPacijenataUIzolaciji(PacijentFilterDTO filter);
+        int? GetBrojPacijenataVanIzolacije(PacijentFilterDTO filter);
+        int? GetBrojPacijenataKojiSuPrekrsiliIzolaciju(PacijentFilterDTO filter);
+        int? GetBrojPacijenataSaSimptomima(PacijentFilterDTO filter);
+        List<PacijentReadDTO> GetPacijenteKojiSuPrekrsiliIzolaciju(PacijentFilterDTO filter);
+        List<PacijentReadDTO> GetPacijenteKojiImajuSimptome(PacijentFilterDTO filter);
     }
 }
